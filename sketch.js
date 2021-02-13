@@ -2,17 +2,18 @@ var caveground, caveImg;
 var cactusImg;
 var ninja,ninjajumping, ninjadead;
 var invisibleline, invisiblelineGroup;
-var endingline;
-var PLAY = 1;
-var END = 0;
-var gameState = PLAY;
+var endingline1, endingline2, endinegline3, endingline4;
+var gameState = "serve";
+var level = 1;
 var score, rube, diamonds;
 var hororSound;
 var scoringline, scorelineGroup;
 var enemy1Img, enemy2Img;
 var gameover, gameoverImg, leftarrow, leftarrowImg, right_arrow, right_arrowImg, restart, restartImg;
 var rubiImg, woodImg,diamondImg;
-var gamesound;
+var gamesound, gameoversound;
+var caveImage, coinImage, playImage;
+var start;
 
 function preload(){
   caveImg = loadImage("background_cave.png");
@@ -39,6 +40,12 @@ function preload(){
   restartImg = loadImage("reset.png");
   ninjadead = loadAnimation("Idle__008.png");
   gamesound = loadSound("game.mp3");
+  gameoversound = loadSound("gameover.mp3");
+  caveImage = loadImage("caveImage.jpg");
+  coinImage = loadImage("coin.png");
+  playImage = loadImage("play.png");
+
+
 
 
 
@@ -48,17 +55,28 @@ function preload(){
 
 function setup(){
   createCanvas(600,600);
-  
+ 
+
   caveground = createSprite(300,300);
   caveground.addImage(caveImg);
   caveground.scale = 1.5;
   ninja = createSprite(100,300,20,20);
-  ninja.addAnimation("jumping",ninjajumping);
   ninja.addAnimation("dying",ninjadead);
+  ninja.addAnimation("jumping",ninjajumping);
   ninja.scale = 0.15;
-  ninja.setCollider("rectangle",10,5,160,160);
-  endingline = createSprite(300,590,600,10);
-  //endingline.visible = false;
+ // ninja.debug = true;
+  ninja.setCollider("rectangle",0,105,160,160);
+  endingline1 = createSprite(300,599,600,1);
+  endingline1.visible = false;
+
+  endingline2 = createSprite(300,2,600,1);
+  endingline2.visible = false;
+
+  endinegline3 = createSprite(2,300,1,600);
+  endinegline3.visible = false;
+
+  endingline4 = createSprite(599,300,1,600);
+  endingline4.visible = false;
 
   leftarrow = createSprite(550,550,10,10);
   leftarrow.addImage(leftarrowImg);
@@ -68,7 +86,7 @@ function setup(){
   right_arrow.addImage(right_arrowImg);
   right_arrow.scale = 0.1;
 
-  gameover = createSprite(280,300,10,10);
+  gameover = createSprite(295,300,10,10);
   gameover.addImage(gameoverImg);
   gameover.scale = 0.5;
 
@@ -76,12 +94,16 @@ function setup(){
   rube = 0;
   diamonds = 0;
 
-  restart = createSprite(550,90,10,10);
+  restart = createSprite(550,80,10,10);
   restart.addImage(restartImg);
   restart.scale = 0.1;
-  
 
- 
+  start = createSprite(300,300,10,10);
+  start.addImage(playImage);
+  start.scale = 0.5;
+  start.visible =  true;
+
+
   invisiblelineGroup = createGroup();
   scorelineGroup = createGroup();
   cactusGroup = createGroup();
@@ -90,22 +112,49 @@ function setup(){
   diamondGroup = createGroup();
   lineGroup = createGroup();
   enemyGroup = createGroup();
+
+ // gamesound.play();
+  gameover.visible = false;
+  restart.visible = false;
+  leftarrow.visible = false;
+  right_arrow.visible = false;
+  ninja.y = 70;
+  ninja.x= 50;
+  
   
 }
 
 function draw(){
-  if(gameState===PLAY){
 
-   // gamesound.play();
-   
-   
+ 
 
+ if(mousePressedOver(start) && gameState === "serve"){
+
+  gameState = "play";
+  start.visible = false;
+  gameover.visible = false;
+  restart.visible = false;
+  leftarrow.visible = false;
+  right_arrow.visible = false;
+  ninja.x= 100;
+  ninja.y = 300;
+  gamesound.play();
+
+ }
+
+  background(3,3,23);
+
+
+  if(gameState==="play" && level ===1 ){
+
+    ninja.changeAnimation("jumping", ninjajumping);
+    
     gameover.visible = false;
     restart.visible = false;
     leftarrow.visible = true;
     right_arrow.visible = true;
     
-    caveground.velocityY = 6;
+    caveground.velocityY = (6+1*score/100);
     spawnLine();
     spawnCactus();
     spawnWood();
@@ -115,15 +164,15 @@ function draw(){
     score = score+Math.round(getFrameRate()/60);
     
     if(keyDown("space")){
-    ninja.velocityY = -6;       
+    ninja.velocityY = -(6+2*score/300);       
   }
   ninja.velocityY = ninja.velocityY+0.5;
   
-  if(mousePressedOver(leftarrow)){
+  if(mousePressedOver(leftarrow) || keyDown(LEFT_ARROW)){
     ninja.x = ninja.x-5;
   }
   
-  if(mousePressedOver(right_arrow)){
+  if(mousePressedOver(right_arrow) || keyDown(RIGHT_ARROW)){
     ninja.x = ninja.x+5;
   }
   
@@ -141,6 +190,91 @@ function draw(){
   }
     
     if(ninja.isTouching(scorelineGroup)){
+
+    scorelineGroup.destroyEach();
+    rubiGroup.setLifetimeEach(0);
+    rube = rube+1;
+    score = score+5;
+    
+    
+  }
+
+  if(ninja.isTouching(diamondGroup)){
+
+    diamondGroup.destroyEach();
+    diamonds = diamonds+1;
+    score = score+50;
+
+  }
+  if(diamonds === 1 || rube === 5){
+
+    level =2;
+
+  } 
+  if(ninja.isTouching(invisiblelineGroup)||
+      ninja.isTouching(endingline1)|| 
+      ninja.isTouching(endingline2) ||
+      ninja.isTouching(endinegline3) ||
+      ninja.isTouching(endingline4) || 
+      ninja.isTouching(enemyGroup) ||
+      ninja.isTouching(cactusGroup)){
+
+       gameState = "end";
+       gameoversound.play();
+       gamesound.stop();
+
+  }
+    
+    
+  }else if(gameState === "play" && level ===2){
+  
+  
+
+    gameover.visible = false;
+    restart.visible = false;
+    leftarrow.visible = true;
+    right_arrow.visible = true;
+    
+    caveground.velocityY = (6+2*score/100);
+    caveground.addImage(caveImage);
+    caveground.scale = 3;
+
+    spawnline();
+    spawnCactus();
+    spawnWood();
+    spawndiamond();
+    spawnObstacles();
+
+    score = score+Math.round(getFrameRate()/60);
+    
+    if(keyDown("space")){
+    ninja.velocityY = -(6+2*score/300);       
+  }
+    ninja.velocityY = ninja.velocityY+0.5;
+  
+  if(mousePressedOver(leftarrow) || keyDown(LEFT_ARROW)){
+    ninja.x = ninja.x-5;
+  }
+  
+  if(mousePressedOver(right_arrow) || keyDown(RIGHT_ARROW)){
+    ninja.x = ninja.x+5;
+  }
+  
+  if(ninja.isTouching(lineGroup)){
+
+    lineGroup.destroyEach();
+    score = score+1;
+    
+  }
+
+  if(ninja.isTouching(woodGroup)){
+
+    ninja.velocityY = 0;
+
+  }
+    
+    if(ninja.isTouching(scorelineGroup)){
+
     scorelineGroup.destroyEach();
     rubiGroup.setLifetimeEach(0);
     rube = rube+1;
@@ -157,22 +291,31 @@ function draw(){
 
   }
     
-   if(ninja.isTouching(invisiblelineGroup)|| ninja.isTouching(endingline)|| ninja.isTouching(enemyGroup) || ninja.isTouching(cactusGroup)){
+   if(ninja.isTouching(invisiblelineGroup)||
+      ninja.isTouching(endingline1)|| 
+      ninja.isTouching(endingline2) ||
+      ninja.isTouching(endinegline3) ||
+      ninja.isTouching(endingline4) || 
+      ninja.isTouching(enemyGroup) ||
+      ninja.isTouching(cactusGroup)){
 
-       gameState = END;
+       gameState = "end";
+       gameoversound.play();
+       gamesound.stop();
 
   }
     
     
-  }else if(gameState===END){
+  }else if(gameState==="end"){
      
      caveground.velocityY = 0;
-     ninja.velocityY = 0;
 
-     ninja.x = 120;
-     ninja.y = 300;
+    // gamesound.stop();
 
      ninja.changeAnimation("dying",ninjadead);
+     //ninja.x = 120;
+     //ninja.y = 300;
+     ninja.velocityY=0;
      invisiblelineGroup.setVelocityXEach(0);
      invisiblelineGroup.setVelocityYEach(0);
      invisiblelineGroup.setLifetimeEach(-1);
@@ -208,38 +351,58 @@ function draw(){
       reset();
 
      }
-
-
-
     
   }
-  
-  
-  if(caveground.y>600){
+
+
+  if(caveground.y>450){
+   
     caveground.y = 300;
+ 
   }
-      
+ 
+       
 
   
   drawSprites();
-  fill("white");
-  textSize(20);
-  text("Score: "+score,500,50);
 
-  if(gameState===END){
+// text("Press Startbutton to start Level: 1 and press spacekey to save the ninja from cactus and guards",100,50);
+//
+// 
+//
+// if(mousePressedOver(start)){
+//
+//   gameState = LEVEL1;
+//
+// }
+//
+  if(gameState==="end" || gameState ==="play"){
 
     fill("yellow");
     textSize(20);
-    text("Rubi: "+rube,25,50);
+    text("Ruby: "+rube,25,50);
     
     fill("lightgreen");
     textSize(20);
     text("Diamond: "+diamonds,25,30);
 
+    fill("white");
+    textSize(20);
+    text("Score: "+score,480,50);
+
+    }
+    if(gameState ==="serve"){
+      textSize(20);
+      fill("white");
+      textFont("Roboto");
+      text("Hunt the treasures, beware of the Gatekeepers",90,80);
+      text("How to play:",90, 150 );
+      text("Click space to keep the Ninja moving up..", 90, 180);
+      text("Use arrow keys to move Left & Right", 90,210);
+      text("Collect treasures, Diamonds will take to you next level", 70,400);
     }
 
-
-}
+  }
 
 function spawnLine(){
   if(frameCount % 200 === 0){
@@ -249,8 +412,8 @@ function spawnLine(){
   rubi.addImage(rubiImg);
   rubi.scale = 0.01;
  
-  //scoringline.visible = false;
-  //invisibleline.visible = false;
+  scoringline.visible = false;
+  
 
   scoringline.velocityY = (1+2*score/500);
   rubi.velocityY = (1+2*score/500);
@@ -293,7 +456,9 @@ function spawnLine(){
 
         var wood = createSprite(250,20,25,5);
         var invisibleline = createSprite(100,25,100,5);
+        invisibleline.visible = false;
         var line = createSprite(100,10,100,5);
+        line.visible = false;
         wood.addImage(woodImg);
         wood.scale = 0.1;
         wood.velocityY = (1+2*score/500);
@@ -322,7 +487,7 @@ function spawndiamond(){
 
     var diamond = createSprite(103,20,5,4);
     diamond.addImage(diamondImg);
-    diamond.scale = 0.1;
+    diamond.scale = 0.15;
     diamond.velocityY = (1+2*score/50);
     diamond.x = Math.round(random(20,600));
     diamond.lifetime = 700;
@@ -345,11 +510,11 @@ function spawnObstacles(){
   switch(rand){
       case 1: enemy.addImage(enemy1Img);
               enemy.scale = 0.2;
-              enemy.velocityX = -(6+2*score/500);
+              enemy.velocityX = -(5+2*score/500);
       break;
       case 2: enemy.addImage(enemy2Img);
               enemy.scale = 0.2;
-              enemy.velocityX = (10+2*score/500);
+              enemy.velocityX = (5+2*score/500);
       break;
   }
     enemyGroup.add(enemy);
@@ -357,27 +522,56 @@ function spawnObstacles(){
   }
 }
 
+function spawnline(){
+
+  if(frameCount % 200 === 0){
+    var scoringline = createSprite(100,5,50,5);
+    var coin = createSprite(100,100,5,5);
+    coin.addImage(coinImage);
+    coin.scale = 0.05;
+    scoringline.visible = false;
+      
+    scoringline.velocityY = (1+2*score/500);
+    coin.velocityY = (1+2*score/500);
+    scoringline.x = Math.round(random(150,400));
+    coin.x = scoringline.x;
+    coin.y = scoringline.y;
+      
+    scoringline.lifetime = 700;
+    coin.lifetime = 700;
+    scorelineGroup.add(scoringline);
+    rubiGroup.add(coin);
+      
+      
+    }
+
+
+}
+
+
 function reset(){
 
-  gameState = PLAY;
+  gameState = "play";
   ninja.changeAnimation("jumping",ninjajumping);
   ninja.x = 100;
   ninja.y = 300;
   score = 0;
   rube = 0;
   diamonds = 0;
+  level = 1;
   cactusGroup.destroyEach();
   rubiGroup.destroyEach();
   woodGroup.destroyEach();
   enemyGroup.destroyEach();
   diamondGroup.destroyEach();
   invisiblelineGroup.destroyEach();
-  scoringlineGroup.destroyEach();
+  scorelineGroup.destroyEach();
   lineGroup.destroyEach();
   gameover.visible = false;
   restart.visible = false;
   leftarrow.visible = true;
   right_arrow.visible = true;
+  gamesound.play();
  
   
 }
